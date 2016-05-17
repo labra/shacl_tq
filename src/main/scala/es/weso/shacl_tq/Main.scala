@@ -14,7 +14,6 @@ class Opts(
 
   footer("Enjoy!")
 
-
   val data = opt[String]("data",
     short = 'd',
     required = true,
@@ -47,7 +46,7 @@ object Main extends App {
     val str = io.Source.fromFile(opts.data()).mkString
     val binder = ShaclBinder.fromString(str,opts.dataFormat(),None)
     val rdf = RDFAsJenaModel.fromChars(str,opts.dataFormat()).get
-    val result = binder.validate(rdf)
+    val result = binder.validateModel(rdf)
     println("Result: " + result)
     println("Prefix map: " + binder.pm)
     

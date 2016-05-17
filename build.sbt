@@ -9,13 +9,13 @@ name := "shacl_tq"
 
 scalaVersion := "2.11.8"
 
-version := "0.0.7"
+version := "0.0.10"
 
 libraryDependencies ++= Seq(
     "commons-configuration" % "commons-configuration" % "1.7"
   , "org.rogach" %% "scallop" % "0.9.5" 
   , "org.scalatest" % "scalatest_2.11" % "3.0.0-M15" % "test"
-  , "es.weso" % "srdf-jena_2.11" % "0.0.3" 
+  , "es.weso" % "srdf-jena_2.11" % "0.0.5" 
   , "es.weso" % "weso_utils_2.11" % "0.0.6" 
   , "es.weso" % "validating_2.11" % "0.0.6"   
   )

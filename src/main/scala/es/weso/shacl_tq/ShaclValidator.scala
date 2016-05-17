@@ -2,25 +2,28 @@ package es.weso.shacl_tq
 
 import java.net.URI
 import java.util.UUID
+import org.apache.jena.graph.Graph
+import org.apache.jena.graph.compose.MultiUnion
+import org.apache.jena.query.Dataset
+import org.apache.jena.rdf.model.Model
+import org.apache.jena.rdf.model.ModelFactory
+import org.apache.jena.util.FileUtils
 import org.topbraid.shacl.arq.SHACLFunctions
 import org.topbraid.shacl.constraints.ModelConstraintValidator
-import org.topbraid.shacl.vocabulary.SH
+import org.topbraid.shacl.util.ModelPrinter
 import org.topbraid.spin.arq.ARQFactory
 import org.topbraid.spin.util.JenaUtil
-import com.hp.hpl.jena.rdf.model.Model
-import com.hp.hpl.jena.rdf.model.ModelFactory
-import com.hp.hpl.jena.util.FileUtils
+import org.topbraid.shacl._
 import org.apache.jena.riot._
 import java.io.ByteArrayOutputStream
- 
 
 object ShaclValidator {
   
+  
+  
   def validate(dataModel: Model, shapesModel: Model): (Model,Long) = {
     try {
-      val shaclModel = JenaUtil.createDefaultModel()
-      val is = getClass().getResourceAsStream("/etc/shacl.ttl")
-      shaclModel.read(is, SH.BASE_URI, FileUtils.langTurtle)
+      val shaclModel = ShaclSystemModel.shaclModel
       
       val combined = ModelFactory.createDefaultModel()
       combined.add(dataModel);

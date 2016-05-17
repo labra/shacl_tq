@@ -7,7 +7,7 @@ import scala.util.{ Failure, Success, Try }
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.riot.RDFLanguages.shortnameToLang
 
-import com.hp.hpl.jena.rdf.model.{ Model, ModelFactory, Resource }
+import org.apache.jena.rdf.model.{ Model, ModelFactory, Resource }
 
 import es.weso.rdf.PREFIXES.rdf_type
 import es.weso.rdf.{ RDFReader, PrefixMap }
@@ -19,7 +19,7 @@ import es.weso.validating.Checked.{ checkError, errs, ok }
 import es.weso.validating.ConstraintReason
 import es.weso.validating.ConstraintReason.cReason
 import es.weso.validating.SingleReason
-import com.hp.hpl.jena.vocabulary.RDF
+import org.apache.jena.vocabulary.RDF
 import scala.collection.JavaConversions._
 
 
@@ -42,17 +42,6 @@ case class ShaclBinder(shapesGraph: Model) {
     out.toString       
   }
 
-  def validate(rdf: RDFReader): Checked[Boolean,ConstraintReason,ViolationError] = {
-    rdf match {
-      case RDFAsJenaModel(rdfModel) => {
-        val (resultModel,time) = ShaclValidator.validate(rdfModel,shapesGraph)
-        println(s"Result: ${ShaclValidator.result2Str(resultModel)}")  
-        convertResultModel(resultModel)
-      }
-      case _ => checkError(ViolationError.msgError(s"Unsupported rdfReader which are not based on Jena Models $rdf")) 
-    }
-  }
-  
   def validateModel(rdf: RDFReader): Model = {
     rdf match {
       case RDFAsJenaModel(rdfModel) => {
@@ -66,7 +55,45 @@ case class ShaclBinder(shapesGraph: Model) {
       }
     }
   }
-
+  
+/*  def validate(rdf: RDFReader): Checked[Boolean,ConstraintReason,ViolationError] = {
+    rdf match {
+      case RDFAsJenaModel(rdfModel) => {
+        val (resultModel,time) = ShaclValidator.validate(rdfModel,shapesGraph)
+        println(s"Result: ${ShaclValidator.result2Str(resultModel)}")  
+        convertResultModel(resultModel)
+      }
+      case _ => checkError(ViolationError.msgError(s"Unsupported rdfReaders which are not based on Jena Models $rdf")) 
+    }
+  }
+  */
+  
+  /**
+   * Validates a node against a shape
+   * 
+   * It only adds a scopeNode declaration from the shape to the node
+   */
+  def validateNodeShape(node: IRI, shape: String, rdf: RDFReader): Model = {
+    rdf match {
+      case RDFAsJenaModel(rdfModel) => {
+        val sh_scopeNodeStr = "http://www.w3.org/ns/shacl#scopeNode"
+        val sh_scopeNode = rdfModel.createProperty(sh_scopeNodeStr)
+        val resourceShape = rdfModel.createResource(shape)
+        val resourceNode = rdfModel.createResource(node.str)
+        rdfModel.add(resourceShape,sh_scopeNode,resourceNode)
+        val (resultModel,time) = ShaclValidator.validate(rdfModel,shapesGraph)
+        println(s"Result: ${ShaclValidator.result2Str(resultModel)}")  
+        resultModel
+      }
+      case _ => {
+        val m = ModelFactory.createDefaultModel()
+        m.add(m.createResource,m.createProperty(sh_message.str),m.createLiteral(s"Unsupported rdf $rdf"))
+        m
+      }
+    }
+    
+  }
+  
   
   def convertResultModel(resultModel: Model): Checked[Boolean,ConstraintReason,ViolationError] = {
     if (resultModel.size == 0) ok(SingleReason(true,"Validated"))
