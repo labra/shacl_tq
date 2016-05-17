@@ -2,7 +2,7 @@ package es.weso.shacl_tq
 
 import org.rogach.scallop._
 import org.rogach.scallop.exceptions._
-import es.weso.shacl._
+import es.weso.rdf.jena.RDFAsJenaModel
 
 class Opts(
   arguments: Array[String],
@@ -20,6 +20,11 @@ class Opts(
     required = true,
     descr = "Data to validate")
 
+  val dataFormat = opt[String]("data-format",
+    short = 'f',
+    default = Some("Turtle"),
+    descr = "Data format to validate (default = TURTLE)")
+    
   val shacl = opt[String]("shacl",
     short = 'x',
     descr = "SHACL schema")
@@ -38,12 +43,20 @@ object Main extends App {
       opts.printHelp()
       return
     }
-  
-    val (results, time) = 
+
+    val str = io.Source.fromFile(opts.data()).mkString
+    val binder = ShaclBinder.fromString(str,opts.dataFormat(),None)
+    val rdf = RDFAsJenaModel.fromChars(str,opts.dataFormat()).get
+    val result = binder.validate(rdf)
+    println("Result: " + result)
+    println("Prefix map: " + binder.pm)
+    
+/*    val (results, time) = 
       ShaclValidator.validate(opts.data(), opts.shacl.get.getOrElse(""))
       println("Result: " + ShaclValidator.result2Str(results))
-      println("Elapsed time: " + time + " ns")
-   }
+      println("Elapsed time: " + time + " ns") */ 
+    
+   } 
     
     
    private def errorDriver(e: Throwable, scallop: Scallop) = e match {

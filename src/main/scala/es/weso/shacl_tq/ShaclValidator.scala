@@ -1,6 +1,5 @@
-package es.weso.shacl
+package es.weso.shacl_tq
 
-import java.io.InputStream
 import java.net.URI
 import java.util.UUID
 import org.topbraid.shacl.arq.SHACLFunctions
@@ -8,10 +7,6 @@ import org.topbraid.shacl.constraints.ModelConstraintValidator
 import org.topbraid.shacl.vocabulary.SH
 import org.topbraid.spin.arq.ARQFactory
 import org.topbraid.spin.util.JenaUtil
-import org.topbraid.shacl.util.ModelPrinter
-import com.hp.hpl.jena.graph.Graph
-import com.hp.hpl.jena.graph.compose.MultiUnion
-import com.hp.hpl.jena.query.Dataset
 import com.hp.hpl.jena.rdf.model.Model
 import com.hp.hpl.jena.rdf.model.ModelFactory
 import com.hp.hpl.jena.util.FileUtils

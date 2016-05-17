@@ -9,7 +9,7 @@ name := "shacl_tq"
 
 scalaVersion := "2.11.8"
 
-version := "0.0.1"
+version := "0.0.7"
 
 libraryDependencies ++= Seq(
     "commons-configuration" % "commons-configuration" % "1.7"

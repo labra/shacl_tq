@@ -1,4 +1,4 @@
-package es.weso.shacl
+package es.weso.shacl_tq
 
 import org.scalatest._
 import java.io.InputStream

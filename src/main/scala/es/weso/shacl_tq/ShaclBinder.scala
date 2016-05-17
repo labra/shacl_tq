@@ -1,24 +1,37 @@
-package es.weso.shacl
-import es.weso.validating._
-import es.weso.validating.Constraint._
-import es.weso.validating.Checked._
-import es.weso.validating.ConstraintReason._
-import com.hp.hpl.jena.rdf.model.Model
-import com.hp.hpl.jena.rdf.model.ModelFactory
-import java.io._
+package es.weso.shacl_tq
+
+import java.io.{ ByteArrayOutputStream, StringReader }
+
+import scala.util.{ Failure, Success, Try }
+
 import org.apache.jena.riot.RDFDataMgr
-import org.apache.jena.riot.RDFLanguages._
-import es.weso.rdf.RDFReader
-import es.weso.rdf.jena.RDFAsJenaModel
-import es.weso.rdf.PREFIXES.{rdf_type}
-import es.weso.rdf.nodes._
-import util._
+import org.apache.jena.riot.RDFLanguages.shortnameToLang
+
+import com.hp.hpl.jena.rdf.model.{ Model, ModelFactory, Resource }
+
+import es.weso.rdf.PREFIXES.rdf_type
+import es.weso.rdf.{ RDFReader, PrefixMap }
+import es.weso.rdf.jena.{RDFAsJenaModel, JenaMapper}
+import es.weso.rdf.nodes.{ IRI, RDFNode }
 import es.weso.utils.TryUtils
+import es.weso.validating.Checked
+import es.weso.validating.Checked.{ checkError, errs, ok }
+import es.weso.validating.ConstraintReason
+import es.weso.validating.ConstraintReason.cReason
+import es.weso.validating.SingleReason
+import com.hp.hpl.jena.vocabulary.RDF
+import scala.collection.JavaConversions._
+
 
 case class ShaclBinder(shapesGraph: Model) {
   
   lazy val sh = IRI("http://www.w3.org/ns/shacl#")
+  lazy val sh_Shape = sh + "Shape"
   lazy val sh_ValidationResult = sh + "ValidationResult"
+  lazy val sh_message = sh + "message"
+  
+  def rdfShapes : RDFReader = 
+    RDFAsJenaModel(shapesGraph)
   
   def fromString(cs:CharSequence, format: String, base:Option[String]): ShaclBinder = 
     ShaclBinder.fromString(cs,format,base)
@@ -33,11 +46,27 @@ case class ShaclBinder(shapesGraph: Model) {
     rdf match {
       case RDFAsJenaModel(rdfModel) => {
         val (resultModel,time) = ShaclValidator.validate(rdfModel,shapesGraph)
+        println(s"Result: ${ShaclValidator.result2Str(resultModel)}")  
         convertResultModel(resultModel)
       }
       case _ => checkError(ViolationError.msgError(s"Unsupported rdfReader which are not based on Jena Models $rdf")) 
     }
   }
+  
+  def validateModel(rdf: RDFReader): Model = {
+    rdf match {
+      case RDFAsJenaModel(rdfModel) => {
+        val (resultModel,time) = ShaclValidator.validate(rdfModel,shapesGraph)
+        resultModel
+      }
+      case _ => {
+        val m = ModelFactory.createDefaultModel()
+        m.add(m.createResource,m.createProperty(sh_message.str),m.createLiteral(s"Unsupported rdf $rdf"))
+        m
+      }
+    }
+  }
+
   
   def convertResultModel(resultModel: Model): Checked[Boolean,ConstraintReason,ViolationError] = {
     if (resultModel.size == 0) ok(SingleReason(true,"Validated"))
@@ -54,7 +83,24 @@ case class ShaclBinder(shapesGraph: Model) {
   }
   
   private def getViolationError(result: RDFReader, node: RDFNode): Try[ViolationError] = {
-    ViolationError.parse(result,node)
+    println(s"getViolationError on $node")
+    val ts = result.triplesWithSubjectPredicate(node,sh_message)
+    val msg = 
+      if (ts.size == 1) ts.head.obj.toString
+      else "<not found message>"
+      
+    // ViolationError.parse(result,node)
+    // ViolationErrorParser.parse(node,result)
+    Success(ViolationError.msgError(msg))
+  }
+  
+  def shapes: List[RDFNode] = {
+    val shapeTriples = rdfShapes.triplesWithPredicateObject(rdf_type, sh_Shape)
+    shapeTriples.map(_.subj).toList
+  }
+  
+  def pm: PrefixMap = {
+    rdfShapes.getPrefixMap
   }
   
 }

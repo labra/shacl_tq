@@ -1,31 +1,9 @@
-package es.weso.shacl
+package es.weso.shacl_tq
 
 import es.weso.rdf.nodes._
 import es.weso.rdf.parser.RDFParser
-import es.weso.rdf.RDFReader
 import util._
 
-case class ViolationError(
-    message: String,
-    focusNode: Option[RDFNode],
-    subject: Option[RDFNode],
-    predicate: Option[RDFNode],
-    severity: Option[RDFNode],
-    sourceConstraint: Option[RDFNode],
-    sourceShape: Option[RDFNode],
-    sourceTemplate: Option[RDFNode]
-)
-
-object ViolationError {
-  def msgError(msg: String): ViolationError = 
-    ViolationError(msg,None,None,None,None,None,None,None)
-    
-  def parse(rdf:RDFReader, node: RDFNode): Try[ViolationError] = {
-    ViolationErrorParser.parse(node,rdf)
-  }
-  
-}
-    
 object ViolationErrorParser extends RDFParser {
   
   lazy val sh = IRI("http://www.w3.org/ns/shacl#")
